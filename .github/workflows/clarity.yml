@@ -1,8 +1,26 @@
-name: lab06
-run-name: lab06
+name: Build
+run-name: ${{ github.actor }} compiling based on CMakeLists.txt
 on: [push]
-jobs:
-  make_linux:
+jobs: 
+  compile_on_ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Tests
+        run: |
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build _build
+          cmake --build _build --target test -- ARGS=--verbose
+      - name: Generate and send a code coverage report to Coveralls
+        uses: threeal/gcovr-action@v1.0.0
+        with:
+          excludes: third-party
+          coveralls-send: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  make_artifacts:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -10,36 +28,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential lcov
       - name: Build Tests
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
-      - name: Generate coverage report
-        run: |
-          cd _build
-          /usr/bin/lcov --capture --directory . --output-file coverage.info
-          /usr/bin/lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          /usr/bin/lcov --list coverage.info
-      - name: Upload coverage to Coveralls
-        run: coveralls-lcov _build/coverage.info
       - name: Make CPack artifacts
         run: |
           cd _build
-          cpack -G "DEB"
           cpack -G "TGZ"
+          cpack -G "DEB"
           cpack -G "RPM"
           cd ..
-      - name: upload
+      - name: Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux_build
-          path: _build/banking-*
-  make_windows:
+          name: linux_artifacts
+          path: _build/banking_app-*
+  make_windows_artifacts:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
     steps:
@@ -47,31 +53,41 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install dependencies
-        run: |
-          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-          choco install lcov
       - name: Build Tests
         run: |
-          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
-          cmake --build D:/a/lab06/lab06/_build
-          cmake --build D:/a/lab06/lab06/_build --target test -- ARGS=--verbose
-      - name: Generate coverage report
-        run: |
-          cd D:/a/lab06/lab06/_build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --list coverage.info
-      - name: Upload coverage to Coveralls
-        run: coveralls-lcov _build/coverage.info
+          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
+          cmake --build _build
       - name: Make CPack artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
-      - name: upload
+      - name: Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows_build
-          path: D:/a/lab06/lab06/_build/banking-*
+          name: windows_artifacts
+          path: _build/banking_app-*
+  make_macos_artifacts:
+    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Tests
+        run: |
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build _build
+          cmake --build _build --target test -- ARGS=--verbose
+      - name: Make CPack artifacts
+        run: |
+          cd _build
+          cpack -G "Bundle"
+          cd ..
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos_artifacts
+          path: _build/banking_app-*
