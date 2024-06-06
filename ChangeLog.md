@@ -1,2 +1,2 @@
-* Sun Jun 02 2024  <> 0.1.0.0
+* Mon Apr 22 2024 VakulinGrigory <lukychs@mail.com> 0.1.0.0
 - Initial RPM release
