@@ -9,11 +9,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up CMake
-        run: sudo apt-get install -y cmake
       - name: Build and Test
         run: |
-          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON -DCMAKE_MINIMUM_REQUIRED_VERSION=3.5
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
       - name: Generate and send code coverage report to Coveralls
@@ -31,15 +29,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up CMake
-        run: choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
       - name: Build Tests
         run: |
-          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON -DCMAKE_MINIMUM_REQUIRED_VERSION=3.5
-          cmake --build D:/a/lab06/lab06/_build
+          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
+          cmake --build _build
       - name: Make CPack Artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
@@ -47,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows_artifacts
-          path: D:/a/lab06/lab06/_build/banking_app-*
+          path: _build/banking_app-*
