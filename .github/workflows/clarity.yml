@@ -14,7 +14,7 @@ jobs:
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
-      - name: Generate and send a code coverage report to Coveralls
+      - name: Generate and send code coverage report to Coveralls
         uses: threeal/gcovr-action@v1.0.0
         with:
           excludes: third-party
@@ -31,10 +31,10 @@ jobs:
       - name: Build Tests
         run: |
           cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build _build
+          cmake --build D:/a/lab06/lab06/_build
       - name: Make CPack artifacts
         run: |
-          cd _build
+          cd D:/a/lab06/lab06/_build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
@@ -42,5 +42,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows_artifacts
-          path: _build/banking_app-*
+          path: D:/a/lab06/lab06/_build/banking_app-*
 
