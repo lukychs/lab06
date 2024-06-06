@@ -14,12 +14,37 @@ jobs:
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
-      - name: Generate and send code coverage report to Coveralls
+      - name: Generate and send a code coverage report to Coveralls
         uses: threeal/gcovr-action@v1.0.0
         with:
           excludes: third-party
           coveralls-send: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+  make_artifacts:
+    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Tests
+        run: |
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build _build
+          cmake --build _build --target test -- ARGS=--verbose
+      - name: Make CPack artifacts
+        run: |
+          cd _build
+          cpack -G "TGZ"
+          cpack -G "DEB"
+          cpack -G "RPM"
+          cd ..
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux_artifacts
+          path: _build/banking_app-*
   make_windows_artifacts:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
@@ -31,10 +56,10 @@ jobs:
       - name: Build Tests
         run: |
           cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build D:/a/lab06/lab06/_build
+          cmake --build _build
       - name: Make CPack artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
@@ -42,5 +67,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows_artifacts
-          path: D:/a/lab06/lab06/_build/banking_app-*
-
+          path: _build/banking_app-*
+  make_macos_artifacts:
+    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Tests
+        run: |
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build _build
+          cmake --build _build --target test -- ARGS=--verbose
+      - name: Make CPack artifacts
+        run: |
+          cd _build
+          cpack -G "Bundle"
+          cd ..
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos_artifacts
+          path: _build/banking_app-*
