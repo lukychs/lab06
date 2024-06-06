@@ -10,6 +10,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential lcov
       - name: Build Tests
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
@@ -18,9 +22,9 @@ jobs:
       - name: Generate coverage report
         run: |
           cd _build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --list coverage.info
+          /usr/bin/lcov --capture --directory . --output-file coverage.info
+          /usr/bin/lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          /usr/bin/lcov --list coverage.info
       - name: Upload coverage to Coveralls
         run: coveralls-lcov _build/coverage.info
       - name: Make CPack artifacts
@@ -43,13 +47,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: work
+      - name: Install dependencies
         run: |
-          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build _build
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+          choco install lcov
+      - name: Build Tests
+        run: |
+          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build D:/a/lab06/lab06/_build
+          cmake --build D:/a/lab06/lab06/_build --target test -- ARGS=--verbose
       - name: Generate coverage report
         run: |
-          cd _build
+          cd D:/a/lab06/lab06/_build
           lcov --capture --directory . --output-file coverage.info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           lcov --list coverage.info
@@ -57,7 +66,7 @@ jobs:
         run: coveralls-lcov _build/coverage.info
       - name: Make CPack artifacts
         run: |
-          cd _build
+          cd D:/a/lab06/lab06/_build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
@@ -65,5 +74,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows_build
-          path: _build/banking-*
-
+          path: D:/a/lab06/lab06/_build/banking-*
