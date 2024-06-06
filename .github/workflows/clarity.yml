@@ -6,15 +6,29 @@ jobs:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build Tests
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake lcov
+
+      - name: Build and Test with Coverage
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
+          lcov --directory _build --capture --output-file _build/coverage.info
+          lcov --remove _build/coverage.info '/usr/*' --output-file _build/coverage.info
+          lcov --list _build/coverage.info
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: _build/coverage.info
+
       - name: Make CPack artifacts
         run: |
           cd _build
@@ -22,31 +36,47 @@ jobs:
           cpack -G "TGZ"
           cpack -G "RPM"
           cd ..
-      - name: upload
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux_build
           path: _build/banking-*
+
   make_windows:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
     steps:
-      - name: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: work
+
+      - name: Install OpenCppCoverage
         run: |
-          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build _build
+          choco install opencppcoverage --version=0.9.9.0
+
+      - name: Build and Test with Coverage
+        run: |
+          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build D:/a/lab06/lab06/_build
+          OpenCppCoverage --export_type cobertura:coverage.xml -- D:/a/lab06/lab06/_build/Debug/tests.exe
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: D:/a/lab06/lab06/coverage.xml
+
       - name: Make CPack artifacts
         run: |
-          cd _build
+          cd D:/a/lab06/lab06/_build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
-      - name: upload
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows_build
-          path: _build/banking-*
+          path: D:/a/lab06/lab06/_build/banking-*
