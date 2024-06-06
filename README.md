@@ -6,9 +6,8 @@
 $ open https://cmake.org/Wiki/CMake:CPackPackageGenerators
 ```
 
-```sh
 Результат Coveralls : [![Coverage Status](https://coveralls.io/repos/github/lukychs/lab06/badge.svg?branch=main)](https://coveralls.io/github/lukychs/lab06?branch=main)
-```
+
 
 ## Tasks
 
