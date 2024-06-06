@@ -6,29 +6,23 @@ jobs:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake lcov
-
-      - name: Build and Test with Coverage
+      - name: Build Tests
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
-          lcov --directory _build --capture --output-file _build/coverage.info
-          lcov --remove _build/coverage.info '/usr/*' --output-file _build/coverage.info
-          lcov --list _build/coverage.info
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-report
-          path: _build/coverage.info
-
+      - name: Generate coverage report
+        run: |
+          cd _build
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+      - name: Upload coverage to Coveralls
+        run: coveralls-lcov _build/coverage.info
       - name: Make CPack artifacts
         run: |
           cd _build
@@ -36,47 +30,40 @@ jobs:
           cpack -G "TGZ"
           cpack -G "RPM"
           cd ..
-
-      - name: Upload Build Artifacts
+      - name: upload
         uses: actions/upload-artifact@v4
         with:
           name: linux_build
           path: _build/banking-*
-
   make_windows:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
+      - name: checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install OpenCppCoverage
+      - name: work
         run: |
-          choco install opencppcoverage --version=0.9.9.0
-
-      - name: Build and Test with Coverage
+          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
+          cmake --build _build
+      - name: Generate coverage report
         run: |
-          cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
-          cmake --build D:/a/lab06/lab06/_build
-          OpenCppCoverage --export_type cobertura:coverage.xml -- D:/a/lab06/lab06/_build/Debug/tests.exe
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-report
-          path: D:/a/lab06/lab06/coverage.xml
-
+          cd _build
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+      - name: Upload coverage to Coveralls
+        run: coveralls-lcov _build/coverage.info
       - name: Make CPack artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
-
-      - name: Upload Build Artifacts
+      - name: upload
         uses: actions/upload-artifact@v4
         with:
           name: windows_build
-          path: D:/a/lab06/lab06/_build/banking-*
+          path: _build/banking-*
+
