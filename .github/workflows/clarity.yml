@@ -5,11 +5,11 @@ jobs:
   compile_on_ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build Tests
+      - name: Build and Test
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
@@ -20,27 +20,28 @@ jobs:
           excludes: third-party
           coveralls-send: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
   make_windows_artifacts:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Build Tests
         run: |
           cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build D:/a/lab06/lab06/_build
-      - name: Make CPack artifacts
+          cmake --build _build
+      - name: Make CPack Artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
-      - name: Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows_artifacts
-          path: D:/a/lab06/lab06/_build/banking_app-*
+          path: _build/banking_app-*
 
