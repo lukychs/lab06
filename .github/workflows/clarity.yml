@@ -1,51 +1,52 @@
-name: Build
-run-name: ${{ github.actor }} compiling based on CMakeLists.txt
+name: lab06
+run-name: lab06
 on: [push]
-jobs: 
-  compile_on_ubuntu:
+jobs:
+  make_linux:
+    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up CMake
-        run: sudo apt-get install -y cmake
-      - name: Build and Test
+      - name: Build Tests
         run: |
           cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
           cmake --build _build
           cmake --build _build --target test -- ARGS=--verbose
-      - name: Generate and send code coverage report to Coveralls
-        uses: threeal/gcovr-action@v1.0.0
+      - name: Make CPack artifacts
+        run: |
+          cd _build
+          cpack -G "DEB"
+          cpack -G "TGZ"
+          cpack -G "RPM"
+          cd ..
+      - name: upload
+        uses: actions/upload-artifact@v4
         with:
-          excludes: third-party
-          coveralls-send: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  make_windows_artifacts:
+          name: linux_build
+          path: _build/banking-*
+  make_windows:
     if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
     runs-on: windows-latest
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up CMake
-        run: choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-      - name: Build Tests
+      - name: work
         run: |
           cmake -S D:/a/lab06/lab06 -B D:/a/lab06/lab06/_build
-          cmake --build D:/a/lab06/lab06/_build
-      - name: Make CPack Artifacts
+          cmake --build _build
+      - name: Make CPack artifacts
         run: |
-          cd D:/a/lab06/lab06/_build
+          cd _build
           cpack -G "ZIP"
           cpack -G "NSIS"
           cd ..
-      - name: Upload Artifacts
+      - name: upload
         uses: actions/upload-artifact@v4
         with:
-          name: windows_artifacts
-          path: D:/a/lab06/lab06/_build/banking_app-*
-
+          name: windows_build
+          path: _build/banking-*
