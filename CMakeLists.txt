@@ -1,43 +1,31 @@
-cmake_minimum_required(VERSION 3.5) 
-
-cmake_minimum_required(VERSION 3.20)
-
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
-
-set(CMAKE_CXX_STANDARD 11)
+cmake_minimum_required(VERSION 3.4)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-project(banking_app)
-
-set(BANKING_VERSION_MAJOR 0)
-set(BANKING_VERSION_MINOR 1)
-set(BANKING_VERSION_PATCH 0)
-set(BANKING_VERSION_TWEAK 0)
-set(BANKING_VERSION ${BANKING_VERSION_MAJOR}.${BANKING_VERSION_MINOR}.${BANKING_VERSION_PATCH}.${BANKING_VERSION_TWEAK})
-set(BANKING_VERSION_STRING "v${BANKING_VERSION}")
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/third-party/CMake-codecov/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/third-party/CMake-codecov/cmake" ${CMAKE_MODULE_PATH})  
+project(banking)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/banking)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/banking)
 
+
 if (BUILD_TESTS)
   add_subdirectory(third-party/gtest)
-  enable_testing()
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
   include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})  
-  file(GLOB ACCOUNT_TEST_SOURCES tests/*.cpp)
-  add_executable(check ${ACCOUNT_TEST_SOURCES})
-  target_link_libraries(check gtest transaction gtest_main account gmock)
-  add_test(NAME check COMMAND check)
+  enable_testing()
+  
 
+
+  file(GLOB SOURCES for_test/*.cpp)
+  add_executable(testng ${SOURCES})
+  target_link_libraries(testng gtest gtest_main gmock transaction_lib account_lib)
+  add_test(NAME testng COMMAND testng)
   if (BUILD_COVERAGE)
     set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     find_package(codecov)
-    add_coverage(check)
-    list(APPEND LCOV_REMOVE_PATTERNS "'${PROJECT_SOURCE_DIR}/tests/*'")
+    add_coverage(testng)
+    list(APPEND LCOV_REMOVE_PATTERNS "'${PROJECT_SOURCE_DIR}/for_test/*'")
     coverage_evaluate()
   endif ()
 endif ()
-
 include(CPackConfig.cmake)
